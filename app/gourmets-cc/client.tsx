@@ -1,18 +1,19 @@
+"use client";
+ 
+import React, { useState } from "react";
 import { Shop } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
  
 async function fetchShops(keyword?: string): Promise<Shop[]> {
   const query = new URLSearchParams();
   if (keyword) query.set("keyword", keyword);
  
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_HOST}/api/shops?${query.toString()}`
-    );
+    const res = await fetch(`/api/shops?${query.toString()}`);
     if (!res.ok) {
       console.error(`Failed to fetch shops: ${res.status} ${res.statusText}`);
       return [];
@@ -26,25 +27,30 @@ async function fetchShops(keyword?: string): Promise<Shop[]> {
   }
 }
  
-export default async function GourmetsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ keyword?: string }>;
-}) {
-  const params = await searchParams;
-  const shops = await fetchShops(params.keyword);
+const GourmetsClient = ({ initialShops }: { initialShops: Shop[] }) => {
+  const [keyword, setKeyword] = useState("");
+  const [shops, setShops] = useState<Shop[]>(initialShops);
+ 
+  const handleSearch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const data = await fetchShops(keyword);
+    setShops(data);
+  };
  
   return (
     <div className="flex flex-col items-center justify-start min-h-screen pt-36 px-8 md:px-12 lg:px-16">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      <form className="flex items-center space-x-4 mb-8">
+      <form
+        onSubmit={handleSearch}
+        className="flex items-center space-x-4 mb-8"
+      >
         <Input
           type="search"
-          name="keyword"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
           placeholder="検索..."
-          defaultValue={params.keyword || ""}
           className="max-w-sm w-full"
         />
         <Button type="submit">検索</Button>
@@ -72,4 +78,6 @@ export default async function GourmetsPage({
       </div>
     </div>
   );
-}
+};
+ 
+export default GourmetsClient;
